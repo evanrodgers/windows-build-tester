@@ -97,7 +97,7 @@ function Show-Menu {
     Write-Host "`nPress Escape at any time to stop the script."
 }
 
-# Function to launch and close applications
+# Function to launch and close applications with error handling
 function Launch-Apps {
     while ($global:continueTests) {
         foreach ($app in $apps) {
@@ -105,18 +105,31 @@ function Launch-Apps {
                 Stop-Script
                 return
             }
-            Write-Host "Launching $($app.Name)... Press the ESC key to stop"
-            Add-Content -Path $LogFile -Value "Launching $($app.Name)..."
-            Start-Process $app.Path
-            Start-Sleep -Seconds $AppWaitTime
-            Write-Host "Waiting $AppWaitTime seconds... Press the ESC key to stop"
-            Add-Content -Path $LogFile -Value "Waiting $AppWaitTime seconds..."
-            Write-Host "Closing $($app.Name)... Press the ESC key to stop"
-            Add-Content -Path $LogFile -Value "Closing $($app.Name)..."
-            Stop-Process -Name $app.Executable -Force
-            Start-Sleep -Seconds $AppWaitTime
-            Write-Host "Waiting $AppWaitTime seconds... Press the ESC key to stop"
-            Add-Content -Path $LogFile -Value "Waiting $AppWaitTime seconds..."
+            try {
+                Write-Host "Launching $($app.Name)... Press the ESC key to stop"
+                Add-Content -Path $LogFile -Value "Launching $($app.Name)..."
+                Start-Process $app.Path
+                Start-Sleep -Seconds $AppWaitTime
+                Write-Host "Waiting $AppWaitTime seconds... Press the ESC key to stop"
+                Add-Content -Path $LogFile -Value "Waiting $AppWaitTime seconds..."
+            }
+            catch {
+                Write-Host "Error launching $($app.Name): $_.Exception.Message"
+                Add-Content -Path $LogFile -Value "Error launching $($app.Name): $_.Exception.Message"
+            }
+            
+            try {
+                Write-Host "Closing $($app.Name)... Press the ESC key to stop"
+                Add-Content -Path $LogFile -Value "Closing $($app.Name)..."
+                Stop-Process -Name $app.Executable -Force
+                Start-Sleep -Seconds $AppWaitTime
+                Write-Host "Waiting $AppWaitTime seconds... Press the ESC key to stop"
+                Add-Content -Path $LogFile -Value "Waiting $AppWaitTime seconds..."
+            }
+            catch {
+                Write-Host "Error closing $($app.Name): $_.Exception.Message"
+                Add-Content -Path $LogFile -Value "Error closing $($app.Name): $_.Exception.Message"
+            }
         }
     }
 }
